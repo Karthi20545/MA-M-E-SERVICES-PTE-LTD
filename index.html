@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation/Invoice Generator</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .document-container {
+            background-color: white;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .company-logo-container {
+            display: flex;
+            align-items: flex-start;
+        }
+        .company-logo {
+            max-width: 150px;
+            max-height: 100px;
+            margin-right: 20px;
+            object-fit: contain;
+        }
+        .company-details {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .company-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .document-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            text-decoration: underline;
+        }
+        .document-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .document-info div {
+            margin-bottom: 10px;
+        }
+        .to-section {
+            margin-bottom: 20px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .items-table th {
+            background-color: #f2f2f2;
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        .items-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        .total-section {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .amount-in-words {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .notes-section {
+            margin-top: 30px;
+        }
+        .signature-section {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            margin: 0 auto;
+            width: 150px;
+            padding-top: 5px;
+        }
+        .authorized-signature {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .document-type-selector {
+            margin-bottom: 20px;
+        }
+        @media print {
+            body {
+                background-color: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .document-container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+            }
+        }
+        .logo-preview {
+            max-width: 100px;
+            max-height: 60px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-4 no-print">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4"><i class="fas fa-file-invoice me-2"></i>Quotation/Invoice Generator</h1>
+                
+                <div class="document-type-selector mb-4">
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="documentType" id="quotationRadio" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="quotationRadio">Quotation</label>
+                        
+                        <input type="radio" class="btn-check" name="documentType" id="invoiceRadio" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="invoiceRadio">Invoice</label>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Company Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="companyName" class="form-label">Company Name</label>
+                                <input type="text" class="form-control" id="companyName" value="MA M&E SERVICES PTE LTD">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyLogo" class="form-label">Company Logo</label>
+                                <input type="file" class="form-control" id="companyLogo" accept="image/*">
+                                <img id="logoPreview" class="logo-preview" alt="Logo Preview">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyAddress" class="form-label">Company Address</label>
+                                <textarea class="form-control" id="companyAddress" rows="2">123 Company Street, Singapore 123456</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyContact" class="form-label">Contact Info</label>
+                                <textarea class="form-control" id="companyContact" rows="2">Tel: +65 6123 4567\nEmail: info@mame.com</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyGst" class="form-label">GST Reg No.</label>
+                                <input type="text" class="form-control" id="companyGst" placeholder="GST Registration Number">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Customer Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="customerName" class="form-label">To</label>
+                                <input type="text" class="form-control" id="customerName" placeholder="Customer Name">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="customerAttn" class="form-label">Attn</label>
+                                <input type="text" class="form-control" id="customerAttn" placeholder="Attention Person">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="customerTel" class="form-label">Tel</label>
+                                <input type="text" class="form-control" id="customerTel" placeholder="Phone Number">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="customerAddress" class="form-label">Address</label>
+                                <textarea class="form-control" id="customerAddress" rows="2" placeholder="Customer Address"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Items</h5>
+                        <button class="btn btn-success btn-sm" id="addItemBtn"><i class="fas fa-plus me-1"></i> Add Item</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th>S.No</th>
+                                        <th>Description</th>
+                                        <th width="100px">QTY</th>
+                                        <th width="120px">PRICE/UNIT</th>
+                                        <th width="120px">AMOUNT</th>
+                                        <th width="50px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <tr>
+                                        <td>1</td>
+                                        <td><input type="text" class="form-control item-desc" value="Supplied materials and Man power to perform PU Jacketing work"></td>
+                                        <td><input type="number" class="form-control quantity" min="1" value="1"></td>
+                                        <td><input type="number" class="form-control rate" min="0" step="0.01" value="3050"></td>
+                                        <td><input type="text" class="form-control-plaintext amount" value="$3,050.00" readonly></td>
+                                        <td><button class="btn btn-danger btn-sm remove-item"><i class="fas fa-trash-alt"></i></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Document Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="documentDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="documentDate">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="documentNumber" class="form-label">Document No.</label>
+                                <input type="text" class="form-control" id="documentNumber" placeholder="QTN-001/INV-001">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="validUntil" class="form-label">Valid Until (Quotation)</label>
+                                <input type="date" class="form-control" id="validUntil">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="yourRef" class="form-label">Your Ref.</label>
+                                <input type="text" class="form-control" id="yourRef" placeholder="Reference">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="ourRef" class="form-label">Our Ref.</label>
+                                <input type="text" class="form-control" id="ourRef" placeholder="Reference">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="terms" class="form-label">Terms</label>
+                                <input type="text" class="form-control" id="terms" placeholder="Payment Terms" value="30 days from date of invoice">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="gstRate" class="form-label">GST Rate (%)</label>
+                                <input type="number" class="form-control" id="gstRate" min="0" max="100" step="0.1" value="8">
+                            </div>
+                            <div class="col-md-12">
+                                <label for="notes" class="form-label">Note</label>
+                                <textarea class="form-control" id="notes" rows="2">Thank you for your business!</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions text-center no-print mb-4">
+                    <button class="btn btn-primary" id="saveBtn"><i class="fas fa-save me-1"></i> Save</button>
+                    <button class="btn btn-secondary ms-2" id="printBtn"><i class="fas fa-print me-1"></i> Print</button>
+                    <button class="btn btn-outline-danger ms-2" id="resetBtn"><i class="fas fa-trash-alt me-1"></i> Reset</button>
+                    <button class="btn btn-outline-info ms-2" id="loadBtn"><i class="fas fa-folder-open me-1"></i> Load</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Template -->
+    <div class="document-container d-none" id="documentTemplate">
+        <div class="company-header">
+            <div class="company-logo-container">
+                <img id="qtCompanyLogo" src="" alt="Company Logo" class="company-logo">
+                <div class="company-details">
+                    <div class="company-name" id="qtCompanyName">MA M&E SERVICES PTE LTD</div>
+                    <div id="qtCompanyAddress">123 Company Street, Singapore 123456</div>
+                    <div id="qtCompanyContact">Tel: +65 6123 4567 | Email: info@mame.com</div>
+                    <div id="qtCompanyGst"></div>
+                </div>
+            </div>
+            <div>
+                <div class="document-title" id="qtDocumentTitle">QUOTATION</div>
+            </div>
+        </div>
+
+        <div class="document-info">
+            <div>
+                <div><strong>Date:</strong> <span id="qtDocumentDate"></span></div>
+                <div><strong id="qtDocumentNumberLabel">Quotation No.:</strong> <span id="qtDocumentNumber"></span></div>
+                <div id="qtValidUntilContainer"><strong>Valid Until:</strong> <span id="qtValidUntil"></span></div>
+            </div>
+            <div>
+                <div><strong>Your Ref.:</strong> <span id="qtYourRef"></span></div>
+                <div><strong>Our Ref.:</strong> <span id="qtOurRef"></span></div>
+            </div>
+            <div>
+                <div><strong>Terms:</strong> <span id="qtTerms"></span></div>
+                <div><strong>GST Reg No.:</strong> <span id="qtGstRegNo"></span></div>
+            </div>
+        </div>
+
+        <div class="to-section">
+            <div><strong>TO:</strong> <span id="qtCustomerName"></span></div>
+            <div><strong>Address:</strong> <span id="qtCustomerAddress"></span></div>
+            <div><strong>Attn:</strong> <span id="qtCustomerAttn"></span></div>
+            <div><strong>Tel:</strong> <span id="qtCustomerTel"></span></div>
+        </div>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Description</th>
+                    <th>QTY</th>
+                    <th>PRICE/UNIT</th>
+                    <th>AMOUNT</th>
+                </tr>
+            </thead>
+            <tbody id="qtItemsTableBody">
+                <!-- Items will be added here -->
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <div><strong>Subtotal</strong> <span id="qtSubtotal">$3,050.00</span></div>
+            <div id="qtGstContainer"><strong>GST (<span id="qtGstRate">8</span>%)</strong> <span id="qtGstAmount">$244.00</span></div>
+            <div><strong>TOTAL</strong> <span id="qtGrandTotal">$3,294.00</span></div>
+        </div>
+
+        <div class="amount-in-words">
+            <strong>SGD:</strong> <span id="qtAmountInWords">Three Thousand Two Hundred Ninety-Four Dollars Only</span>
+        </div>
+
+        <div class="notes-section">
+            <div><strong>Note:</strong></div>
+            <div id="qtNotes">Thank you for your business!</div>
+        </div>
+
+        <div class="signature-section">
+            <div></div>
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Authorized Signature</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Documents Modal -->
+    <div class="modal fade" id="loadModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Load Saved Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Document No.</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="savedDocumentsList">
+                            <!-- Saved documents will be listed here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today's date as default
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            document.getElementById('documentDate').value = formattedDate;
+            
+            // Set valid until date (7 days from today)
+            const validUntil = new Date();
+            validUntil.setDate(validUntil.getDate() + 7);
+            document.getElementById('validUntil').value = validUntil.toISOString().split('T')[0];
+
+            // Initialize event listeners for existing items
+            initializeItemRows();
+
+            // Add item button click handler
+            document.getElementById('addItemBtn').addEventListener('click', addNewItemRow);
+
+            // Print button click handler
+            document.getElementById('printBtn').addEventListener('click', function() {
+                generateDocumentTemplate();
+                document.getElementById('documentTemplate').classList.remove('d-none');
+                setTimeout(function() {
+                    window.print();
+                    document.getElementById('documentTemplate').classList.add('d-none');
+                }, 500);
+            });
+
+            // Reset button click handler
+            document.getElementById('resetBtn').addEventListener('click', resetForm);
+            
+            // Save button click handler
+            document.getElementById('saveBtn').addEventListener('click', saveDocument);
+            
+            // Load button click handler
+            document.getElementById('loadBtn').addEventListener('click', showSavedDocuments);
+            
+            // Document type change handler
+            document.querySelectorAll('input[name="documentType"]').forEach(radio => {
+                radio.addEventListener('change', updateDocumentType);
+            });
+            
+            // Logo upload handler
+            document.getElementById('companyLogo').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        document.getElementById('logoPreview').src = event.target.result;
+                        document.getElementById('logoPreview').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Calculate initial totals
+            calculateTotals();
+        });
+
+        // Initialize event listeners for existing item rows
+        function initializeItemRows() {
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            rows.forEach(row => {
+                const quantityInput = row.querySelector('.quantity');
+                const rateInput = row.querySelector('.rate');
+                const removeBtn = row.querySelector('.remove-item');
+                
+                quantityInput.addEventListener('input', calculateRowTotal);
+                rateInput.addEventListener('input', calculateRowTotal);
+                removeBtn.addEventListener('click', function() {
+                    row.remove();
+                    updateItemNumbers();
+                    calculateTotals();
+                });
+            });
+        }
+
+        // Add a new item row to the table
+        function addNewItemRow() {
+            const tbody = document.getElementById('itemsTableBody');
+            const newRow = document.createElement('tr');
+            const itemNumber = tbody.children.length + 1;
+            
+            newRow.innerHTML = `
+                <td>${itemNumber}</td>
+                <td><input type="text" class="form-control item-desc" placeholder="Item description"></td>
+                <td><input type="number" class="form-control quantity" min="1" value="1"></td>
+                <td><input type="number" class="form-control rate" min="0" step="0.01" value="0"></td>
+                <td><input type="text" class="form-control-plaintext amount" value="$0.00" readonly></td>
+                <td><button class="btn btn-danger btn-sm remove-item"><i class="fas fa-trash-alt"></i></button></td>
+            `;
+            
+            tbody.appendChild(newRow);
+            
+            // Add event listeners to the new row
+            const quantityInput = newRow.querySelector('.quantity');
+            const rateInput = newRow.querySelector('.rate');
+            const removeBtn = newRow.querySelector('.remove-item');
+            
+            quantityInput.addEventListener('input', calculateRowTotal);
+            rateInput.addEventListener('input', calculateRowTotal);
+            removeBtn.addEventListener('click', function() {
+                tbody.removeChild(newRow);
+                updateItemNumbers();
+                calculateTotals();
+            });
+            
+            // Focus on the item description field
+            newRow.querySelector('.item-desc').focus();
+        }
+
+        // Update item numbers after adding/removing rows
+        function updateItemNumbers() {
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            rows.forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+        }
+
+        // Calculate the total for a single row
+        function calculateRowTotal() {
+            const row = this.closest('tr');
+            const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+            const rate = parseFloat(row.querySelector('.rate').value) || 0;
+            const amount = quantity * rate;
+            
+            row.querySelector('.amount').value = '$' + amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            calculateTotals();
+        }
+
+        // Calculate all totals (subtotal, GST, grand total)
+        function calculateTotals() {
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            let subtotal = 0;
+            
+            rows.forEach(row => {
+                const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+                const rate = parseFloat(row.querySelector('.rate').value) || 0;
+                subtotal += quantity * rate;
+            });
+            
+            const gstRate = parseFloat(document.getElementById('gstRate').value) || 0;
+            const gstAmount = subtotal * (gstRate / 100);
+            const grandTotal = subtotal + gstAmount;
+            
+            // Convert numbers to words
+            const amountInWords = numberToWords(grandTotal);
+            
+            // Update the form (not the document template yet)
+            document.getElementById('qtAmountInWords').textContent = amountInWords + ' Dollars Only';
+            document.getElementById('qtSubtotal').textContent = '$' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('qtGstAmount').textContent = '$' + gstAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('qtGrandTotal').textContent = '$' + grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('qtGstRate').textContent = gstRate;
+        }
+
+        // Generate the document template for print/PDF
+        function generateDocumentTemplate() {
+            // Get document type
+            const isInvoice = document.getElementById('invoiceRadio').checked;
+            const docType = isInvoice ? 'INVOICE' : 'QUOTATION';
+            document.getElementById('qtDocumentTitle').textContent = docType;
+            document.getElementById('qtDocumentNumberLabel').textContent = isInvoice ? 'Invoice No.:' : 'Quotation No.:';
+            
+            // Show/hide valid until for quotations
+            document.getElementById('qtValidUntilContainer').style.display = isInvoice ? 'none' : 'block';
+            
+            // Company details
+            document.getElementById('qtCompanyName').textContent = document.getElementById('companyName').value || 'N/A';
+            
+            // Handle logo
+            const logoInput = document.getElementById('companyLogo');
+            if (logoInput.files && logoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('qtCompanyLogo').src = e.target.result;
+                    document.getElementById('qtCompanyLogo').style.display = 'block';
+                };
+                reader.readAsDataURL(logoInput.files[0]);
+            } else {
+                document.getElementById('qtCompanyLogo').style.display = 'none';
+            }
+            
+            document.getElementById('qtCompanyAddress').textContent = document.getElementById('companyAddress').value || '';
+            document.getElementById('qtCompanyContact').textContent = document.getElementById('companyContact').value.replace(/\n/g, ' | ') || '';
+            document.getElementById('qtCompanyGst').textContent = document.getElementById('companyGst').value ? 'GST Reg No.: ' + document.getElementById('companyGst').value : '';
+            document.getElementById('qtGstRegNo').textContent = document.getElementById('companyGst').value || 'N/A';
+            
+            // Customer details
+            document.getElementById('qtCustomerName').textContent = document.getElementById('customerName').value || 'N/A';
+            document.getElementById('qtCustomerAddress').textContent = document.getElementById('customerAddress').value || '';
+            document.getElementById('qtCustomerAttn').textContent = document.getElementById('customerAttn').value || 'N/A';
+            document.getElementById('qtCustomerTel').textContent = document.getElementById('customerTel').value || 'N/A';
+            
+            // Document details
+            const documentDate = document.getElementById('documentDate').value;
+            if (documentDate) {
+                const dateObj = new Date(documentDate);
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                document.getElementById('qtDocumentDate').textContent = dateObj.toLocaleDateString('en-US', options);
+            } else {
+                document.getElementById('qtDocumentDate').textContent = 'N/A';
+            }
+            
+            document.getElementById('qtDocumentNumber').textContent = document.getElementById('documentNumber').value || 'N/A';
+            
+            const validUntil = document.getElementById('validUntil').value;
+            if (validUntil) {
+                const dateObj = new Date(validUntil);
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                document.getElementById('qtValidUntil').textContent = dateObj.toLocaleDateString('en-US', options);
+            }
+            
+            document.getElementById('qtYourRef').textContent = document.getElementById('yourRef').value || 'N/A';
+            document.getElementById('qtOurRef').textContent = document.getElementById('ourRef').value || 'N/A';
+            document.getElementById('qtTerms').textContent = document.getElementById('terms').value || 'N/A';
+            document.getElementById('qtNotes').textContent = document.getElementById('notes').value || 'N/A';
+            
+            // Items
+            const qtTbody = document.getElementById('qtItemsTableBody');
+            qtTbody.innerHTML = '';
+            
+            const items = document.querySelectorAll('#itemsTableBody tr');
+            let subtotal = 0;
+            
+            items.forEach((item, index) => {
+                const description = item.querySelector('.item-desc').value || 'Item';
+                const quantity = parseFloat(item.querySelector('.quantity').value) || 0;
+                const rate = parseFloat(item.querySelector('.rate').value) || 0;
+                const amount = quantity * rate;
+                
+                subtotal += amount;
+                
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${description}</td>
+                    <td>${quantity}</td>
+                    <td>$${rate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>$${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                `;
+                qtTbody.appendChild(newRow);
+            });
+            
+            // Summary
+            const gstRate = parseFloat(document.getElementById('gstRate').value) || 0;
+            const gstAmount = subtotal * (gstRate / 100);
+            const grandTotal = subtotal + gstAmount;
+            
+            document.getElementById('qtSubtotal').textContent = '$' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('qtGstAmount').textContent = '$' + gstAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('qtGrandTotal').textContent = '$' + grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('qtGstRate').textContent = gstRate;
+            
+            // Amount in words
+            document.getElementById('qtAmountInWords').textContent = numberToWords(grandTotal) + ' Dollars Only';
+        }
+
+        // Reset the form to initial state
+        function resetForm() {
+            if (confirm('Are you sure you want to reset the form? All unsaved data will be lost.')) {
+                document.getElementById('companyName').value = 'MA M&E SERVICES PTE LTD';
+                document.getElementById('companyLogo').value = '';
+                document.getElementById('logoPreview').style.display = 'none';
+                document.getElementById('companyAddress').value = '123 Company Street, Singapore 123456';
+                document.getElementById('companyContact').value = 'Tel: +65 6123 4567\nEmail: info@mame.com';
+                document.getElementById('companyGst').value = '';
+                
+                document.getElementById('customerName').value = '';
+                document.getElementById('customerAttn').value = '';
+                document.getElementById('customerTel').value = '';
+                document.getElementById('customerAddress').value = '';
+                
+                const today = new Date();
+                const formattedDate = today.toISOString().split('T')[0];
+                document.getElementById('documentDate').value = formattedDate;
+                
+                const validUntil = new Date();
+                validUntil.setDate(validUntil.getDate() + 7);
+                document.getElementById('validUntil').value = validUntil.toISOString().split('T')[0];
+                
+                document.getElementById('documentNumber').value = '';
+                document.getElementById('yourRef').value = '';
+                document.getElementById('ourRef').value = '';
+                document.getElementById('terms').value = '30 days from date of invoice';
+                document.getElementById('gstRate').value = '8';
+                document.getElementById('notes').value = 'Thank you for your business!';
+                
+                // Reset to quotation
+                document.getElementById('quotationRadio').checked = true;
+                updateDocumentType();
+                
+                const tbody = document.getElementById('itemsTableBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td>1</td>
+                        <td><input type="text" class="form-control item-desc" value="Supplied materials and Man power to perform PU Jacketing work"></td>
+                        <td><input type="number" class="form-control quantity" min="1" value="1"></td>
+                        <td><input type="number" class="form-control rate" min="0" step="0.01" value="3050"></td>
+                        <td><input type="text" class="form-control-plaintext amount" value="$3,050.00" readonly></td>
+                        <td><button class="btn btn-danger btn-sm remove-item"><i class="fas fa-trash-alt"></i></button></td>
+                    </tr>
+                `;
+                
+                initializeItemRows();
+                calculateTotals();
+            }
+        }
+
+        // Update UI based on document type
+        function updateDocumentType() {
+            const isInvoice = document.getElementById('invoiceRadio').checked;
+            document.getElementById('validUntil').disabled = isInvoice;
+        }
+
+        // Save document to localStorage
+        function saveDocument() {
+            // Get all form data
+            const formData = {
+                documentType: document.querySelector('input[name="documentType"]:checked').id.replace('Radio', ''),
+                company: {
+                    name: document.getElementById('companyName').value,
+                    address: document.getElementById('companyAddress').value,
+                    contact: document.getElementById('companyContact').value,
+                    gst: document.getElementById('companyGst').value,
+                    logo: document.getElementById('logoPreview').src || ''
+                },
+                customer: {
+                    name: document.getElementById('customerName').value,
+                    attn: document.getElementById('customerAttn').value,
+                    tel: document.getElementById('customerTel').value,
+                    address: document.getElementById('customerAddress').value
+                },
+                document: {
+                    date: document.getElementById('documentDate').value,
+                    number: document.getElementById('documentNumber').value,
+                    validUntil: document.getElementById('validUntil').value,
+                    yourRef: document.getElementById('yourRef').value,
+                    ourRef: document.getElementById('ourRef').value,
+                    terms: document.getElementById('terms').value,
+                    gstRate: document.getElementById('gstRate').value,
+                    notes: document.getElementById('notes').value
+                },
+                items: []
+            };
+            
+            // Get all items
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            rows.forEach(row => {
+                formData.items.push({
+                    description: row.querySelector('.item-desc').value,
+                    quantity: row.querySelector('.quantity').value,
+                    rate: row.querySelector('.rate').value,
+                    amount: row.querySelector('.amount').value
+                });
+            });
+            
+            // Calculate totals
+            calculateTotals();
+            formData.subtotal = document.getElementById('qtSubtotal').textContent;
+            formData.gstAmount = document.getElementById('qtGstAmount').textContent;
+            formData.grandTotal = document.getElementById('qtGrandTotal').textContent;
+            formData.amountInWords = document.getElementById('qtAmountInWords').textContent;
+            
+            // Get saved documents or initialize array
+            const savedDocuments = JSON.parse(localStorage.getItem('savedDocuments')) || [];
+            
+            // Check if we're updating an existing document
+            const existingIndex = savedDocuments.findIndex(doc => doc.document.number === formData.document.number && doc.document.number !== '');
+            
+            if (existingIndex >= 0) {
+                savedDocuments[existingIndex] = formData;
+            } else {
+                // Add new document
+                savedDocuments.push(formData);
+                
+                // If no document number, generate one
+                if (!formData.document.number) {
+                    const prefix = formData.documentType === 'invoice' ? 'INV-' : 'QTN-';
+                    const lastDoc = savedDocuments.filter(doc => doc.document.number.startsWith(prefix)).sort().pop();
+                    let nextNumber = 1;
+                    
+                    if (lastDoc) {
+                        const lastNumber = parseInt(lastDoc.document.number.replace(prefix, ''));
+                        if (!isNaN(lastNumber)) {
+                            nextNumber = lastNumber + 1;
+                        }
+                    }
+                    
+                    formData.document.number = prefix + nextNumber.toString().padStart(3, '0');
+                    document.getElementById('documentNumber').value = formData.document.number;
+                }
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('savedDocuments', JSON.stringify(savedDocuments));
+            
+            alert('Document saved successfully!');
+        }
+
+        // Show saved documents in modal
+        function showSavedDocuments() {
+            const savedDocuments = JSON.parse(localStorage.getItem('savedDocuments')) || [];
+            const tbody = document.getElementById('savedDocumentsList');
+            tbody.innerHTML = '';
+            
+            if (savedDocuments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No saved documents found</td></tr>';
+            } else {
+                savedDocuments.forEach((doc, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${doc.document.number || 'N/A'}</td>
+                        <td>${doc.documentType === 'invoice' ? 'Invoice' : 'Quotation'}</td>
+                        <td>${doc.document.date || 'N/A'}</td>
+                        <td>${doc.customer.name || 'N/A'}</td>
+                        <td>${doc.grandTotal || '$0.00'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary load-doc" data-index="${index}">
+                                <i class="fas fa-edit"></i> Load
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-doc" data-index="${index}">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // Add event listeners to load buttons
+                document.querySelectorAll('.load-doc').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadDocument(parseInt(this.getAttribute('data-index')));
+                        bootstrap.Modal.getInstance(document.getElementById('loadModal')).hide();
+                    });
+                });
+                
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-doc').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        if (confirm('Are you sure you want to delete this document?')) {
+                            deleteDocument(parseInt(this.getAttribute('data-index')));
+                        }
+                    });
+                });
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('loadModal'));
+            modal.show();
+        }
+
+        // Load a saved document
+        function loadDocument(index) {
+            const savedDocuments = JSON.parse(localStorage.getItem('savedDocuments')) || [];
+            if (index >= 0 && index < savedDocuments.length) {
+                const doc = savedDocuments[index];
+                
+                // Set document type
+                document.getElementById(doc.documentType + 'Radio').checked = true;
+                updateDocumentType();
+                
+                // Company info
+                document.getElementById('companyName').value = doc.company.name;
+                document.getElementById('companyAddress').value = doc.company.address;
+                document.getElementById('companyContact').value = doc.company.contact;
+                document.getElementById('companyGst').value = doc.company.gst;
+                
+                if (doc.company.logo) {
+                    document.getElementById('logoPreview').src = doc.company.logo;
+                    document.getElementById('logoPreview').style.display = 'block';
+                } else {
+                    document.getElementById('logoPreview').style.display = 'none';
+                }
+                
+                // Customer info
+                document.getElementById('customerName').value = doc.customer.name;
+                document.getElementById('customerAttn').value = doc.customer.attn;
+                document.getElementById('customerTel').value = doc.customer.tel;
+                document.getElementById('customerAddress').value = doc.customer.address;
+                
+                // Document info
+                document.getElementById('documentDate').value = doc.document.date;
+                document.getElementById('documentNumber').value = doc.document.number;
+                document.getElementById('validUntil').value = doc.document.validUntil;
+                document.getElementById('yourRef').value = doc.document.yourRef;
+                document.getElementById('ourRef').value = doc.document.ourRef;
+                document.getElementById('terms').value = doc.document.terms;
+                document.getElementById('gstRate').value = doc.document.gstRate;
+                document.getElementById('notes').value = doc.document.notes;
+                
+                // Items
+                const tbody = document.getElementById('itemsTableBody');
+                tbody.innerHTML = '';
+                
+                doc.items.forEach((item, i) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td><input type="text" class="form-control item-desc" value="${item.description}"></td>
+                        <td><input type="number" class="form-control quantity" min="1" value="${item.quantity}"></td>
+                        <td><input type="number" class="form-control rate" min="0" step="0.01" value="${item.rate}"></td>
+                        <td><input type="text" class="form-control-plaintext amount" value="${item.amount}" readonly></td>
+                        <td><button class="btn btn-danger btn-sm remove-item"><i class="fas fa-trash-alt"></i></button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                initializeItemRows();
+                calculateTotals();
+                
+                alert('Document loaded successfully!');
+            }
+        }
+
+        // Delete a saved document
+        function deleteDocument(index) {
+            const savedDocuments = JSON.parse(localStorage.getItem('savedDocuments')) || [];
+            if (index >= 0 && index < savedDocuments.length) {
+                savedDocuments.splice(index, 1);
+                localStorage.setItem('savedDocuments', JSON.stringify(savedDocuments));
+                showSavedDocuments();
+            }
+        }
+
+        // Convert number to words
+        function numberToWords(num) {
+            const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+            const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            
+            function convertLessThanOneThousand(number) {
+                let word = '';
+                if (number % 100 < 20) {
+                    word = single[number % 100];
+                    number = Math.floor(number / 100);
+                } else {
+                    word = single[number % 10];
+                    number = Math.floor(number / 10);
+                    
+                    word = tens[number % 10] + (word ? '-' + word : '');
+                    number = Math.floor(number / 10);
+                }
+                if (number === 0) return word;
+                return single[number] + ' Hundred' + (word ? ' ' + word : '');
+            }
+            
+            if (num === 0) return 'Zero';
+            
+            num = Math.floor(num); // Handle only whole numbers
+            
+            let words = [];
+            if (Math.floor(num / 1000000)) {
+                words.push(convertLessThanOneThousand(Math.floor(num / 1000000)) + ' Million');
+                num %= 1000000;
+            }
+            if (Math.floor(num / 1000)) {
+                words.push(convertLessThanOneThousand(Math.floor(num / 1000)) + ' Thousand');
+                num %= 1000;
+            }
+            if (num) {
+                words.push(convertLessThanOneThousand(num));
+            }
+            
+            return words.join(' ');
+        }
+    </script>
+</body>
+</html>
